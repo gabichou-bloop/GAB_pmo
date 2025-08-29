@@ -53,10 +53,11 @@ class VPNConnection:
 
 if __name__ == "__main__":
     vpn = VPNConnection(
-        vps_host="168.231.108.51",
+        vps_host="your ip",
         ssh_user="root",
-        ssh_key=r"C:\Users\Gabriel\.ssh\id_rsa",
+        ssh_key=r"your key",
         local_port=1080,   # proxy SOCKS5
         forward_port=5000  # dashboard Flask
     )
     vpn.start()
+
