@@ -10,7 +10,7 @@ class securcrypt_key():
         try:
             self.key = zp.decoder.decompress(str(key))
         except:
-            raise crypt_execption(f"inalide data: {key}")
+            self.key = key
         self.mag = magique
 
     def get_key(self):
@@ -37,6 +37,12 @@ class securcrypt_key():
             return bytes(morceaux_int).decode("utf-8", errors="ignore"), morceaux_int
         except Exception as e:
             raise crypt_execption(f"decode error: {e}")
+    def __str__(self):
+        sing,bite=self.get_sing()
+        return sing
+    def __int__(self):
+        _, singb = self.get_sing()
+        return int("".join(str(c) for c in singb))
 
 def gen_key():
     key = gen()
@@ -45,30 +51,27 @@ def gen_key():
 def crypt(data: str, key: securcrypt_key) -> str:
     if not isinstance(key, securcrypt_key):
         raise crypt_execption(f"invalide key: {key}")
-    if "_" in data:
-        raise crypt_execption(f"invalide data : {data}")
+    count = 0
+    for _ in data:
+        count += 1
+        if "_" in data:
+            datal = list(data)
+            if len(datal) > 1:
+                if datal[count] == "@":
+                    raise crypt_execption(f"invalide data : {data}")
 
-    # récupérer signature
-    _, singb = key.get_sing()
-    bite = "".join(str(c) for c in singb)
-
-    # 🔹 ajouter la signature directement dans le texte
-    signed_data = data + "_" + str(bite)
+    # 🔹 utiliser la valeur entière (via __int__)
+    signed_data = data + "_@" + str(int(key))
 
     # transformer en int puis bytes
     datab = int.from_bytes(signed_data.encode("utf-8"), "big")
     mixed_bytes = datab.to_bytes((datab.bit_length() + 7) // 8, "big")
 
-    return base64.b64encode(mixed_bytes).decode("utf-8"),signed_data
+    return base64.b64encode(mixed_bytes).decode("utf-8"), signed_data
 def verify_signature(signed_data: str, key: securcrypt_key) -> bool:
-    """
-    Vérifie qu'un message signé correspond bien à la clé et au magique.
-    signed_data doit être de la forme "message_signature"
-    """
-    try:
-        msg, sig = signed_data.split("_", 1)
-    except ValueError:
-        raise crypt_execption("données signées invalides (manque _)")
+    if "_@" not in signed_data:
+        raise crypt_execption("données signées invalides (manque _@)")
+    msg, sig = signed_data.split("_@", 1)
 
     # recalculer la signature attendue
     _, singb = key.get_sing()
@@ -80,10 +83,10 @@ def decrypt(encoded: str, key: securcrypt_key) -> str:
     # décodage base64 -> bytes -> int -> string
     mixed_bytes = base64.b64decode(encoded)
     datab = int.from_bytes(mixed_bytes, "big")
-    decoded = datab.to_bytes((datab.bit_length() + 7) // 8, "big").decode("utf-8", errors="ignore")
+    decoded = datab.to_bytes((datab.bit_length() + 7) // 8, "big").decode("utf-8", errors="strict")
 
     # ⚡ séparer message et signature
-    msg, sig = decoded.split("_", 1)
+    msg, sig = decoded.split("_@", 1)
 
     # (optionnel) vérifier la signature
     _, singb = key.get_sing()
@@ -101,4 +104,4 @@ if __name__ == "__main__":
     print(f"Clé={key},Clè compresser = {keyc} , mag=100 =>", sig, "| Bytes:", raw)
     crypted,singed =crypt("abcdefg",a)
     print("crypter : ",crypted,"singed =>",singed,"decrypter =>",decrypt(crypted,a))
-    print("singtur valide: ",verify_signature(singed,a))
+    print("singatur valide: ",verify_signature(singed,a))
