@@ -1,0 +1,7 @@
+input nom EntreTonPrénom:
+print nom
+caca = mdr
+open txt.txt w caca
+
+runshell echo bonjour nom
+exit
